@@ -29,44 +29,57 @@ export default class Calculator extends Component{
     }
 
     setOperation(op) {
-        const nextPos = this.state.current ? 0: 1
-        let values = [ ...this.state.values ]
-        values[this.state.current] = this.state.displayValue
-        this.setState({
-            values: values,
-            operation: op,
-            clearDisplay: true,
-            current: nextPos
-        })
-        console.log(this.state)
-        return
+        if (this.state.current === 0){
+            this.setState({
+                operation: op,
+                clearDisplay: true,
+                current: 1
+            })
+        } else {
+            const clearOp = op === '='
+            let values = [ ...this.state.values ]
+            values[0] = this.calculateResult()
+            values[1] = 0
+            console.log(`result: ${values[0]}`)
+            
+            this.setState({
+                values,
+                displayValue: values[0],
+                operation: clearOp ? null : op,
+                current: clearOp? 0: 1,
+                clearDisplay: !clearOp
+            })
+        }
     }
 
     addDigit(n) {
-        console.log(this.state)
         if (n === '.' && this.state.displayValue.includes('.')){
             return
         }
-        if (this.state.displayValue.length >=6){
-            return
-        }
         const clearDisplay = this.state.displayValue === '0'
-        || this.state.clearDisplay
-        const currentValue = clearDisplay ? '': this.state.displayValue
-        this.setState({displayValue: currentValue + n, clearDisplay: false})
+            || this.state.clearDisplay
+        let currentValue = clearDisplay ? '': this.state.displayValue
+        currentValue += n
+        this.setState({displayValue: currentValue, clearDisplay: false})
+
+        if (n !== '.'){
+            let values = [ ...this.state.values ]
+            const i = this.state.current
+            const newValue = parseFloat(currentValue)
+            values[i] = newValue
+            this.setState({ values })
+        }
     }
 
     calculateResult(){
-        let values = [ ...this.state.values ]
-        values[this.state.current] = this.state.displayValue
-        const exprString = `${values[0]}${this.state.operation}${values[1]}`
-        const result = eval(exprString)
-
-        this.setState({
-            displayValue: result,
-            values: [this.state.values[0], 0],
-            current: 1
-        })
+        const op = this.state.operation
+        const values = this.state.values
+        switch(op){
+            case '/': return values[0] / values[1]
+            case '*': return values[0] * values[1]
+            case '+': return values[0] + values[1]
+            case '-': return values[0] - values[1]
+        }
     }
     
 
@@ -90,7 +103,7 @@ export default class Calculator extends Component{
                 <Button label="+" click={this.setOperation} operation/>
                 <Button label="0" double click={this.addDigit}/>
                 <Button label="." click={this.addDigit}/>
-                <Button label="=" click={this.calculateResult} operation/>
+                <Button label="=" click={this.setOperation} operation/>
             </div>
         )
     }
